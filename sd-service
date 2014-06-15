@@ -1,0 +1,23 @@
+#!/bin/bash
+#
+# So SystemD isn't very verbose and I sometimes miss OpenRC. So I got this
+# really simple script that I dump in /usr/local/bin so that I can run
+# 'sd-service apache2 restart' at the command line just like the good ole'
+# days. (although honestly the lack of auto verbosity in systemD bothers me
+# more than the command format)
+#
+# This crazy basic script is written by R.J. Keller.
+#
+
+if [ -z "$1" ]
+then
+  echo "Please provide a service"
+  exit
+fi
+
+if [ -z "$2" ]
+then
+  echo "Please provide a command"
+  exit
+fi
+
