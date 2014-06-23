@@ -87,7 +87,7 @@ remove() {
     
         echo "+++ Deleting files..."
         rm -rf /var/www/$DOMAIN_NAME
-        rm /etc/apache2/sites-enabled/001-$DOMAIN_NAME.conf
+        rm $APACHE_DIR/001-$DOMAIN_NAME.conf
         sudo $SERVICE apache2 reload
 
         echo "Success!"
