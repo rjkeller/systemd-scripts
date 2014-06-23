@@ -1,0 +1,119 @@
+#!/bin/bash
+#
+# Copyright 2014 Pixonite LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+######
+# sym - A script that sets up the Apache config files for a
+#   symfony installation.
+######
+
+
+usage() {
+  echo "Usage: $0 [COMMAND] [DOMAIN_NAME]"
+  echo ""
+  echo "Commands:"
+  echo "  install - Creates a new template installation."
+  echo "  uninstall - Removes the specified template installation."
+  echo "  list - Lists all template installations on this system."
+  echo ""
+  echo "Options required for all commands:"
+  echo "  [DOMAIN_NAME] - The domain name of this installation (note that you"
+  echo "    will need to update your lcoal hosts file and/or DNS to see this"
+  echo "    domain after installation)"
+  exit
+}
+
+install() {
+    NEW_DOMAIN_NAME=$1
+
+    echo "+++ Generating Apache config files for $NEW_DOMAIN_NAME"
+    echo "
+    <VirtualHost *:80>
+        DocumentRoot /var/www/$NEW_DOMAIN_NAME/web
+        ServerName $NEW_DOMAIN_NAME
+
+        <Directory \"/var/www/$NEW_DOMAIN_NAME/web\">
+            # turn off htaccess files in this directory
+            AllowOverride None
+
+            Options +FollowSymLinks +ExecCGI
+
+            <IfModule mod_rewrite.c>
+            RewriteEngine On
+
+            # we check if the .html version is here (caching)
+            RewriteRule ^$ index.html [QSA]
+            RewriteRule ^([^.]+)\\\$ \$1.php [QSA]
+            RewriteCond %{REQUEST_FILENAME} !-f
+
+            # no, so we redirect to our front web controller
+            RewriteRule ^(.*)$ app.php [QSA,L]
+            </IfModule>
+        </Directory>
+
+    </VirtualHost>
+    " > /etc/apache2/sites-enabled/001-$NEW_DOMAIN_NAME.conf
+
+    sudo sd-service apache2 reload
+
+    echo "Success!"
+}
+
+remove() {
+    DOMAIN_NAME=$1
+    
+    if [ ! -f /etc/apache2/sites-enabled/001-$DOMAIN_NAME.conf ]; then
+        echo "FATAL ERROR: Template installation does not exist."
+        exit;
+    fi
+
+    read -p "Are you sure you want to remove $DOMAIN_NAME? [y/n]" -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+    
+        echo "+++ Deleting files..."
+        rm -rf /var/www/$DOMAIN_NAME
+        rm /etc/apache2/sites-enabled/001-$DOMAIN_NAME.conf
+        sudo service apache2 reload
+
+        echo "Success!"
+    fi
+}
+
+###### START MAIN ######
+
+# invoke usage if no commands are supplied
+
+# otherwise run command
+if [ $# == 0 ]; then
+    usage
+fi
+if [ $1 == "install" ]; then
+    if [ $2 == 0 ]; then
+        echo 'Please specify a domain name'
+    else
+        install $2
+    fi
+fi
+if [ $1 == "remove" ]; then
+    if [ $2 == 0 ]; then
+        echo 'Please specify a domain name'
+    else
+        remove $2
+    fi
+fi
+
+###### END MAIN ######
