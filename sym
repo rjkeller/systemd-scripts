@@ -20,6 +20,8 @@
 #   symfony installation.
 ######
 
+APACHE_DIR=/etc/apache2/vhosts.d
+SERVICE=sd-service
 
 usage() {
   echo "Usage: $0 [COMMAND] [DOMAIN_NAME]"
@@ -65,9 +67,9 @@ install() {
         </Directory>
 
     </VirtualHost>
-    " > /etc/apache2/sites-enabled/001-$NEW_DOMAIN_NAME.conf
+    " > $APACHE_DIR/001-$NEW_DOMAIN_NAME.conf
 
-    sudo sd-service apache2 reload
+    sudo $SERVICE apache2 reload
 
     echo "Success!"
 }
@@ -87,7 +89,7 @@ remove() {
         echo "+++ Deleting files..."
         rm -rf /var/www/$DOMAIN_NAME
         rm /etc/apache2/sites-enabled/001-$DOMAIN_NAME.conf
-        sudo service apache2 reload
+        sudo $SERVICE apache2 reload
 
         echo "Success!"
     fi
