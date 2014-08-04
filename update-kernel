@@ -1,9 +1,28 @@
-cp /usr/src/.config /usr/src/linux
+#!/bin/bash
+#
+# Helps manage a Gentoo Kernel upgrade
+#
+# Author: R.J. Keller
+#
+
+if [ -z "$1" ]
+then
+  echo "Please provide the latest version of the kernel that Portage will install"
+  exit
+fi
+
+
+emerge gentoo-sources
+emerge linux-headers
+cp /usr/src/linux/.config /usr/src/linux-`echo $1`/.config
+eselect kernel set linux-`echo $1`
 cd /usr/src/linux
 make oldconfig
 make
 make modules_install
-mount /dev/vda2 /boot
-cp arch/x86_64/boot/bzImage /boot/kernel-`find /usr/src -name linux-3* | awk -Flinux- '{print \$NF }'`
+
+mount /dev/sda2 /boot
+
+cp arch/x86_64/boot/bzImage /boot/kernel-`echo $1`
 emerge @module-rebuild
 grub2-mkconfig -o /boot/grub/grub.cfg
